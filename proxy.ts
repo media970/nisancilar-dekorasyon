@@ -37,8 +37,10 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isLoginPage = pathname === "/admin/login";
   const isForgotPage = pathname === "/admin/forgot-password";
-  const isAdmin = user?.app_metadata?.role === "admin";
+const userRole = user?.app_metadata?.role;
 
+const isAdmin =
+  userRole === "admin" || userRole === "yönetici";
   if (isForgotPage) {
     return response;
   }
