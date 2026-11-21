@@ -20,6 +20,20 @@ function mergeContent(published: any) {
   };
 }
 
+function toWhatsAppUrl(phone: string) {
+  const digits = String(phone ?? "").replace(/\D/g, "");
+  if (!digits) return "#iletisim";
+
+  // Türkiye numarasını WhatsApp'ın beklediği uluslararası biçime dönüştür.
+  const international = digits.startsWith("90")
+    ? digits
+    : digits.startsWith("0")
+      ? `90${digits.slice(1)}`
+      : `90${digits}`;
+
+  return `https://wa.me/${international}`;
+}
+
 function cityMap(city: string) {
   const normalizedCity = city.trim().replace(/\s+ve çevresi$/i, "") || "Tokat";
   const query = `${normalizedCity}, Türkiye`;
@@ -34,6 +48,8 @@ async function PublishedHome() {
   const supabase = await createClient();
   const { data: publishedData } = await supabase.rpc("get_published_site_content");
   const content = mergeContent(publishedData ?? {});
+  // WhatsApp bağlantısı, yönetim panelindeki tek telefon kaynağından üretilir.
+  const whatsappUrl = toWhatsAppUrl(content.navbar.phone);
   const map = cityMap(content.serviceArea.location);
   const heroTitle = content.hero.title.split(", ");
   const aboutTitle = content.about.title.split(", ");
@@ -240,7 +256,7 @@ async function PublishedHome() {
               Proje Talep Formu <span>↗</span>
             </a>
             <a
-              href={content.contact.whatsapp}
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="button button-outline"
