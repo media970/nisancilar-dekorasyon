@@ -15,6 +15,7 @@ export type CustomerRequest = {
   status: RequestStatus;
   admin_note: string | null;
   created_at: string;
+  archived_at?: string | null;
 };
 
 const statusLabels: Record<RequestStatus, string> = {
@@ -36,6 +37,8 @@ export default function RequestsManager({ requests }: { requests: CustomerReques
   const [filter, setFilter] = useState<"all" | RequestStatus>("all");
   const [selectedId, setSelectedId] = useState<string | null>(requests[0]?.id ?? null);
   const [saving, setSaving] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
 
   const selected = items.find((item) => item.id === selectedId) ?? null;
@@ -72,6 +75,31 @@ export default function RequestsManager({ requests }: { requests: CustomerReques
     setFeedback("Değişiklik kaydedildi.");
     setSaving(false);
     return true;
+  }
+
+  async function archiveVisibleRequests() {
+    if (items.length === 0 || clearing) return;
+    setConfirmArchiveOpen(false);
+    setClearing(true);
+    setFeedback("");
+    const ids = items.map((item) => item.id);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("customer_requests")
+      .update({ archived_at: new Date().toISOString() })
+      .in("id", ids);
+
+    if (error) {
+      setFeedback(`Talepler listeden kaldırılamadı: ${error.message}`);
+      setClearing(false);
+      return;
+    }
+
+    setItems([]);
+    setSelectedId(null);
+    setFilter("all");
+    setFeedback("Talepler yönetim listesinden kaldırıldı. Supabase kayıtları korunuyor.");
+    setClearing(false);
   }
 
   return (
@@ -137,6 +165,24 @@ export default function RequestsManager({ requests }: { requests: CustomerReques
                 {value === "all" ? "Tümü" : statusLabels[value]}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setConfirmArchiveOpen(true)}
+              disabled={clearing || items.length === 0}
+              style={{
+                marginLeft: "auto",
+                border: "1px solid #e4c8c5",
+                background: items.length ? "#fff7f6" : "#f7f6f4",
+                color: items.length ? "#a3332b" : "#aaa",
+                borderRadius: 20,
+                padding: "7px 12px",
+                cursor: clearing || items.length === 0 ? "not-allowed" : "pointer",
+                fontSize: 11,
+                fontWeight: 600,
+              }}
+            >
+              {clearing ? "Temizleniyor…" : "Talepleri Temizle"}
+            </button>
           </div>
 
           {filtered.length === 0 ? (
@@ -281,7 +327,79 @@ export default function RequestsManager({ requests }: { requests: CustomerReques
           )}
         </div>
       </div>
+      {feedback && <p role="status" style={{ marginTop: 14, color: feedback.includes("kaldırılamadı") ? "#b42318" : "#267344", fontSize: 12 }}>{feedback}</p>}
 
+      {confirmArchiveOpen && (
+        <div
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !clearing) setConfirmArchiveOpen(false);
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            display: "grid",
+            placeItems: "center",
+            padding: 20,
+            background: "rgba(24, 22, 19, .48)",
+            backdropFilter: "blur(3px)",
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="archive-dialog-title"
+            aria-describedby="archive-dialog-description"
+            style={{
+              width: "min(100%, 460px)",
+              boxSizing: "border-box",
+              padding: 26,
+              border: "1px solid #e8e2d8",
+              borderRadius: 16,
+              background: "#fff",
+              color: "#292721",
+              boxShadow: "0 24px 70px rgba(0,0,0,.22)",
+              animation: "requestModalIn .18s ease-out",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+              <div aria-hidden="true" style={{
+                width: 42, height: 42, flex: "0 0 42px", display: "grid", placeItems: "center",
+                borderRadius: 12, background: "#f5eee4", color: "#8d704b", fontSize: 20,
+              }}>↗</div>
+              <div style={{ minWidth: 0 }}>
+                <h2 id="archive-dialog-title" style={{ margin: "2px 0 8px", fontSize: 19, lineHeight: 1.35, fontWeight: 600 }}>
+                  Müşteri taleplerini temizle
+                </h2>
+                <p id="archive-dialog-description" style={{ margin: 0, color: "#716b62", fontSize: 13, lineHeight: 1.7 }}>
+                  <strong style={{ color: "#292721" }}>{items.length} talep</strong> yönetim panelindeki aktif listeden kaldırılacak. Kayıtlar Supabase veritabanında silinmeden arşivlenecek ve korunacak.
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: 9, marginTop: 26 }}>
+              <button
+                type="button"
+                autoFocus
+                disabled={clearing}
+                onClick={() => setConfirmArchiveOpen(false)}
+                style={{ border: "1px solid #ded8ce", borderRadius: 8, padding: "10px 16px", background: "#fff", color: "#514b41", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+              >Vazgeç</button>
+              <button
+                type="button"
+                disabled={clearing}
+                onClick={archiveVisibleRequests}
+                style={{ border: 0, borderRadius: 8, padding: "10px 16px", background: "#292721", color: "#fff", fontSize: 12, fontWeight: 600, cursor: clearing ? "wait" : "pointer", opacity: clearing ? .65 : 1 }}
+              >{clearing ? "Arşivleniyor…" : "Evet, temizle"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx global>{`
+        @keyframes requestModalIn { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @media (prefers-reduced-motion: reduce) { [role="dialog"] { animation: none !important; } }
+      `}</style>
     </section>
   );
 }

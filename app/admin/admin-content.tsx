@@ -49,7 +49,13 @@ export default async function AdminContent() {
           >
             <span style={{ color: "#c5a77e", fontSize: "11px", letterSpacing: "2px" }}>BAŞVURU YÖNETİMİ</span>
             <h2 style={{ fontSize: "22px", margin: "10px 0" }}>
-              Müşteri Talepleri <span style={{ float: "right" }}>↗</span>
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                Müşteri Talepleri
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 9 }}>
+                  <AdminNotifications />
+                  <span aria-hidden="true">↗</span>
+                </span>
+              </span>
             </h2>
             <p style={{ fontSize: "14px", color: "#d0c9bd", margin: 0 }}>
               Web sitesinden gelen proje başvurularını görüntüleyin ve takip edin.

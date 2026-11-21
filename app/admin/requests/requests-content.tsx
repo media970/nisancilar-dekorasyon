@@ -18,10 +18,10 @@ export default async function RequestsContent() {
 
   const { data, error } = await supabase
     .from("customer_requests")
-    .select("id, full_name, phone, email, request_type, message, status, admin_note, created_at")
+    .select("id, full_name, phone, email, request_type, message, status, admin_note, created_at, archived_at")
     .order("created_at", { ascending: false });
 
-  const requests = (data ?? []) as CustomerRequest[];
+  const requests = ((data ?? []) as CustomerRequest[]).filter((request) => !request.archived_at);
 
   return (
     <main style={{

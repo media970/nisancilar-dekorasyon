@@ -38,6 +38,14 @@ function mapsForCity(city: string) {
   };
 }
 
+function formatTurkishPhone(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 4) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+  return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 9)} ${digits.slice(9, 11)}`;
+}
+
 function setAtPath(source: AnyRecord, path: string, value: string) {
   const copy = structuredClone(source);
   const parts = path.split(".");
@@ -246,13 +254,13 @@ export default function CmsEditor({ initialContent }: Props) {
             <input
               type="tel"
               inputMode="numeric"
-              value={field.value}
+              value={formatTurkishPhone(field.value)}
               onChange={(event) => update(field.path, event.target.value)}
               placeholder="05xx xxx xx xx"
-              maxLength={11}
+              maxLength={14}
               autoComplete="tel"
             />
-            <small>Başında 0 olacak şekilde 11 rakam girin. Örn. 05054168460. WhatsApp ve arama bağlantıları bu numaradan otomatik oluşturulur.</small>
+            <small>Numarayı 05 ile başlayarak yazın; boşluklar otomatik eklenir. Örn. 0505 416 84 60. WhatsApp ve arama bağlantıları bu numaradan otomatik oluşturulur.</small>
           </> : field.path === "serviceArea.location" ? <>
             <input
               list="turkish-city-list"

@@ -11,7 +11,8 @@ export default function AdminNotifications() {
     const { count: newCount, error } = await supabase
       .from("customer_requests")
       .select("id", { count: "exact", head: true })
-      .eq("status", "new");
+      .eq("status", "new")
+      .is("archived_at", null);
 
     if (!error) {
       setCount(newCount ?? 0);
