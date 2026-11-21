@@ -11,7 +11,7 @@ export default async function AdminContent() {
   await connection();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.app_metadata?.role !== "admin") redirect("/admin/login");
+  if (!user || !["admin", "yönetici"].includes(String(user.app_metadata?.role))) redirect("/admin/login");
 
   return (
     <main style={{ minHeight: "100vh", background: "#f5f3ef", padding: "40px", color: "#292721" }}>

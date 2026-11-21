@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 async function requireAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.app_metadata?.role !== "admin") redirect("/admin/login");
+  if (!user || !["admin", "yönetici"].includes(String(user.app_metadata?.role))) redirect("/admin/login");
   return supabase;
 }
 

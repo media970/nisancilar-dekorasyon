@@ -8,7 +8,7 @@ import CatalogEditor from "../catalog/catalog-editor";
 async function ServicesContent() {
   await connection(); const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user || user.app_metadata?.role !== "admin") redirect("/admin/login");
+  if (!user || !["admin", "yönetici"].includes(String(user.app_metadata?.role))) redirect("/admin/login");
   const { data, error } = await supabase.from("site_content").select("draft_content").eq("id", 1).single();
   if (error) throw new Error(`Hizmetler yüklenemedi: ${error.message}`);
   const items = data?.draft_content?.services?.items ?? [];

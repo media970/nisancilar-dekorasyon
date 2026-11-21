@@ -11,7 +11,7 @@ async function ResetPasswordContent() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user || user.app_metadata?.role !== "admin") {
+  if (!user || !["admin", "yönetici"].includes(String(user.app_metadata?.role))) {
     redirect("/admin/forgot-password");
   }
 
